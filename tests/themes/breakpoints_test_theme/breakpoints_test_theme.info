@@ -1,6 +1,7 @@
 name = Breakpoints test theme
 description = Test theme for breakpoints.
-core = 7.x
+backdrop = 1.x
+type = module
 base theme = bartik
 hidden = TRUE
 

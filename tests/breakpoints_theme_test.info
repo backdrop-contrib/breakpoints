@@ -1,5 +1,6 @@
 name = Breakpoints Theme Test
 description = Test breakpoints provided by themes
 package = Other
-core = 7.x
+backdrop = 1.x
+type = module
 hidden = TRUE

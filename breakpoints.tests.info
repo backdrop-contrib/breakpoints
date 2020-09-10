@@ -1,0 +1,48 @@
+[BreakpointsTestCase]
+name = BreakpointsTestCase
+description = BreakpointsTestCase
+group = breakpoints
+file = breakpoints.test
+
+[BreakpointsCRUDTestCase]
+name = Breakpoints CRUD operations
+description = Test creation, loading, updating, deleting of breakpoints.
+group = Breakpoints
+file = breakpoints.test
+
+[BreakpointsAdminTestCase]
+name = Breakpoints administration functionality
+description = Thoroughly test the administrative interface of the breakpoints module.
+group = Breakpoints
+file = breakpoints.test
+
+[BreakpointGroupTestCase]
+name = BreakpointGroupTestCase
+description = BreakpointGroupTestCase
+group = breakpoints
+file = breakpoints.test
+
+[BreakpointGroupCRUDTestCase]
+name = Breakpoint Group CRUD operations
+description = Test creation, loading, updating, deleting of breakpoint groups.
+group = Breakpoints
+file = breakpoints.test
+
+[BreakpointGroupAdminTestCase]
+name = Breakpoint Group administration functionality
+description = Thoroughly test the administrative interface of the breakpoints module.
+group = Breakpoints
+file = breakpoints.test
+
+[BreakpointsThemeTestCase]
+name = Breakpoint Theme functionality
+description = Thoroughly test the breakpoints provided by a theme.
+group = Breakpoints
+file = breakpoints.test
+
+[BreakpointMultipliersTestCase]
+name = Breakpoint Multiplier functionality
+description = Thoroughly test the breakpoint multiplier functionality (CRUD).
+group = Breakpoints
+file = breakpoints.test
+
