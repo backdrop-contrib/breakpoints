@@ -102,7 +102,7 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
   foreach ($breakpoints as $key => $breakpoint) {
     if ($breakpoint->source_type == BREAKPOINTS_SOURCE_TYPE_THEME) {
       $bp_group = breakpoints_breakpoint_group_load($breakpoint->source);
-      if ($bp_group->overridden && config_get('breakpoints.settings', 'breakpoints_hide_overridden_breakpoints') && $global) {
+      if ($bp_group->overridden && config_get('breakpoints.settings', 'hide_overridden_breakpoints') && $global) {
         continue;
       }
     }
@@ -367,7 +367,7 @@ function theme_breakpoints_admin_breakpoints_table($variables) {
   if ($global) {
     $header[] = array(
       'data' => t('Operations'),
-      'colspan' => 3,
+      'colspan' => 2,
     );
   }
   $header[] = t('Weight');
@@ -400,7 +400,6 @@ function _breakpoints_admin_breakpoints_table_row(&$element, $key, $global) {
   if ($global) {
     $row[] = l($breakpoint->status ? t('Disable') : t('Enable'), 'admin/config/media/breakpoints/' . ($breakpoint->status ? 'disable' : 'enable') . '/' . $key, $link_attributes);
     $row[] = $breakpoint->source_type == BREAKPOINTS_SOURCE_TYPE_CUSTOM ? l(t('Delete'), 'admin/config/media/breakpoints/delete/' . $key, $link_attributes) : '';
-    $row[] = l(t('Export'), 'admin/config/media/breakpoints/export/' . $key, $link_attributes);
   }
 
   $row[] = backdrop_render($element['weight']);
@@ -416,7 +415,6 @@ function _breakpoints_admin_breakpoints_table_new_row(&$element) {
   $row[] = backdrop_render($element['machine_name']);
   $row[] = backdrop_render($element['breakpoint']);
   $row[] = backdrop_render($element['multipliers']);
-  $row[] = '';
   $row[] = '';
   $row[] = '';
   $row[] = '';
@@ -570,14 +568,14 @@ function breakpoints_admin_breakpoints_submit_exporttotheme($form, &$form_state)
  * Page callback.
  */
 function breakpoints_admin_breakpoint_actions_page($group_name, $action, $breakpoint) {
-  if (in_array($action, array('enable', 'disable', 'delete', 'export'))) {
+  if (in_array($action, array('enable', 'disable', 'delete'))) {
     return backdrop_get_form('breakpoints_admin_breakpoint_actions_form', $group_name, $action, $breakpoint);
   }
   return MENU_NOT_FOUND;
 }
 
 /**
- * Admin action form: enable, disable, delete, export
+ * Admin action form: enable, disable, delete
  */
 function breakpoints_admin_breakpoint_actions_form($form, &$form_state, $group_name, $action, $breakpoint) {
   switch ($action) {
@@ -598,9 +596,6 @@ function breakpoints_admin_breakpoint_actions_form($form, &$form_state, $group_n
         $path = 'admin/config/media/breakpoints';
       }
       $form = confirm_form($form, $question, $path, '');
-      break;
-    case 'export':
-      $form = backdrop_get_form('breakpoints_admin_breakpoint_export_form', $breakpoint);
       break;
   }
   return $form;
@@ -882,192 +877,6 @@ function breakpoints_admin_breakpoint_group_delete_form_submit($form, &$form_sta
 }
 
 /**
- * Export a group.
- */
-function breakpoints_admin_breakpoint_group_export_form($form, &$form_state, $machine_name) {
-  // Create the export code textarea.
-  ctools_include('export');
-  $group = breakpoints_breakpoint_group_load($machine_name);
-  if (!$group || !$machine_name) {
-    $group = new stdClass();
-  }
-  $group_export = ctools_export_crud_export('breakpoint_group', $group);
-
-  $form['group_export'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Breakpoint group code'),
-    '#rows' => count(explode("\n", $group_export)),
-    '#default_value' => $group_export,
-  );
-
-  $breakpoints_export = NULL;
-  if (isset($group->breakpoints)) {
-    foreach ($group->breakpoints as $breakpoint) {
-      if (!is_array($breakpoint) && !is_object($breakpoint)) {
-        $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint);
-      }
-      $breakpoints_export .= ctools_export_object('breakpoints', $breakpoint);
-      $breakpoints_export .= "\n";
-    }
-  }
-
-  $form['breakpoints_export'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Breakpoints code'),
-    '#rows' => count(explode("\n", $breakpoints_export)),
-    '#default_value' => $breakpoints_export,
-  );
-
-  return $form;
-}
-
-/**
- * Import a breakpoint group.
- */
-function breakpoints_admin_breakpoint_group_import_form($form, &$form_state) {
-  $form['import'] = array(
-    '#type' => 'textarea',
-    '#rows' => 10,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Import'),
-  );
-  return $form;
-}
-
-/**
- * Validate a breakpoint group import.
- */
-function breakpoints_admin_breakpoint_group_import_form_validate($form, &$form_state) {
-  ctools_include('export');
-  $code = $form_state['values']['import'];
-  $group = ctools_export_crud_import('breakpoint_group', $code);
-  if (!breakpoints_breakpoint_group_validate($group)) {
-    form_set_error('import', t('Not a valid group object'));
-    return;
-  }
-  if (breakpoints_breakpoint_group_name_exists($group->machine_name)) {
-    form_set_error('import', t('A group with machine name %name already exists', array('%name' => $group->machine_name)));
-    return;
-  }
-  foreach ($group->breakpoints as $key => $breakpoint) {
-    // check if the breakpoint is a fully loaded object.
-    if (is_array($breakpoint) || is_object($breakpoint)) {
-      if (!breakpoints_breakpoint_validate($breakpoint)) {
-        form_set_error('import',   t('The breakpoint group contains an invalid breakpoint.'));
-        return;
-      }
-    }
-  }
-  // Manually imported groups are the same as custom made groups.
-  $group->type = BREAKPOINTS_SOURCE_TYPE_CUSTOM;
-  form_set_value($form['import'], $group, $form_state);
-}
-
-/**
- * Import breakpoint group.
- */
-function breakpoints_admin_breakpoint_group_import_form_submit($form, &$form_state) {
-  $group = $form_state['values']['import'];
-
-  foreach ($group->breakpoints as $key => $breakpoint) {
-    // check if the breakpoint is a fully loaded object.
-    if (is_array($breakpoint) || is_object($breakpoint)) {
-      $breakpoint = (object) $breakpoint;
-      // If the breakpoints exist, only overwrite the custom ones.
-      if ($existing_breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint->machine_name)) {
-        if ($breakpoint->source_type == BREAKPOINTS_SOURCE_TYPE_CUSTOM) {
-          $breakpoint = (object) array_merge((array) $existing_breakpoint, (array) $breakpoint);
-          breakpoints_breakpoint_save($breakpoint);
-        }
-      }
-      else {
-        breakpoints_breakpoint_save($breakpoint);
-      }
-      $group->breakpoints[$key] = $breakpoint->machine_name;
-    }
-  }
-  if (breakpoints_breakpoint_group_save($group)) {
-    backdrop_set_message(t('Group %group saved.', array('%group' => $group->name)));
-    $form_state['redirect'] = 'admin/config/media/breakpoints/groups/' . $group->machine_name;
-  }
-  else {
-    backdrop_set_message(t('Something went wrong, we could not save the group', 'error'));
-  }
-}
-
-/**
- * Export a breakpoint.
- */
-function breakpoints_admin_breakpoint_export_form($form, $form_state, $fullkey) {
-  // Create the export code textarea.
-  ctools_include('export');
-  $breakpoint = breakpoints_breakpoint_load_by_fullkey($fullkey);
-  if (!$breakpoint) {
-    $breakpoint = new stdClass();
-  }
-  $export = ctools_export_object('breakpoints', $breakpoint);
-
-  $form['export'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Breakpoint code'),
-    '#rows' => 20,
-    '#default_value' => $export,
-  );
-  return $form;
-}
-
-/**
- * Import breakpoint.
- */
-function breakpoints_admin_breakpoint_import_form($form, $form_state) {
-  $form['import'] = array(
-    '#type' => 'textarea',
-    '#rows' => 10,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Import'),
-  );
-  return $form;
-}
-
-/**
- * Validate a breakpoint import.
- */
-function breakpoints_admin_breakpoint_import_form_validate($form, &$form_state) {
-  ctools_include('export');
-  $code = $form_state['values']['import'];
-  $breakpoint = ctools_export_crud_import('breakpoints', $code);
-  if (!breakpoints_breakpoint_validate($breakpoint)) {
-    form_set_error('import', t('Not a valid breakpoint object'));
-  }
-  else {
-    if (breakpoints_breakpoint_machine_name_exists($breakpoint->machine_name)) {
-      form_set_error('import', t('A breakpoint with machine name %name already exists', array('%name' => $breakpoint->machine_name)));
-    }
-    else {
-      form_set_value($form['import'], $breakpoint, $form_state);
-    }
-  }
-}
-
-/**
- * Import breakpoint.
- */
-function breakpoints_admin_breakpoint_import_form_submit($form, &$form_state) {
-  $breakpoint = $form_state['values']['import'];
-  if (breakpoints_breakpoint_save($breakpoint)) {
-    backdrop_set_message(t('Breakpoint %breakpoint saved.', array('%breakpoint' => $breakpoint->name)));
-    $form_state['redirect'] = 'admin/config/media/breakpoints/';
-  }
-  else {
-    backdrop_set_message(t('Something went wrong, we could not save the breakpoint'), 'error');
-  }
-}
-
-/**
  * Multipliers administration form.
  */
 function breakpoints_multipliers_form($form, &$form_state) {
@@ -1201,7 +1010,7 @@ function breakpoints_admin_settings_form($form, &$form_state) {
     '#type' => 'checkbox',
     '#description' => t('When overriding breakpoints defined by a theme, hide them on the overview page'),
     '#title' => t('Hide overridden breakpoints'),
-    '#default_value' => config_get('breakpoints.settings', 'breakpoints_hide_overridden_breakpoints'),
+    '#default_value' => config_get('breakpoints.settings', 'hide_overridden_breakpoints'),
   );
   return system_settings_form($form);
 }
@@ -1274,8 +1083,8 @@ function breakpoints_admin_breakpoint_group_duplicate_form_submit($form, &$form_
   if ($src_group) {
     breakpoints_breakpoints_group_duplicate($src_group, $name, $machine_name);
     // Clear the Ctools export API cache.
-    ctools_include('export');
-    ctools_export_load_object_reset('breakpoint_group');
+    //ctools_include('export');
+    //ctools_export_load_object_reset('breakpoint_group');
     menu_rebuild();
     $form_state['redirect'] = 'admin/config/media/breakpoints/groups/' . $machine_name;
     backdrop_set_message(t('The new group have been created'));

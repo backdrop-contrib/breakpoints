@@ -1,6 +1,5 @@
 name = Breakpoints
-description = Manage breakpoints
+description = Manage media query breakpoints.
 backdrop = 1.x
 type = module
-dependencies[] = ctools
 configure = admin/config/media/breakpoints

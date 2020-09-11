@@ -1,6 +1,6 @@
 {
     "_config_name": "breakpoints.settings",
-    "breakpoints_hide_overridden_breakpoints": "1",
-    "breakpoints_multipliers": "dynamic value in file /breakpoints/breakpoints.module line 309",
-    "breakpoints_flush_caches_disabled": "FALSE"
+    "hide_overridden_breakpoints": 1,
+    "multipliers": ['1x', '1.5x', '2x'],
+    "flush_caches_disabled": 0
 }
