@@ -386,7 +386,7 @@ function _breakpoints_breakpoint_load_all_callback($reset = FALSE) {
       $breakpoints[$instance]->status = $config->get('status');
       $breakpoints[$instance]->weight = $config->get('weight');
       $breakpoints[$instance]->multipliers = $config->get('multipliers');
-      
+
     }
     cache_set('breakpoints:breakpoints', $breakpoints);
     return $breakpoints;
@@ -490,7 +490,6 @@ function breakpoints_breakpoint_save(&$breakpoint) {
   if (!isset($breakpoint->machine_name) || empty($breakpoint->machine_name)) {
     $breakpoint->machine_name = breakpoints_breakpoint_config_name($breakpoint);
   }
-  $update = (isset($breakpoint->id) && is_numeric($breakpoint->id)) ? array('id') : array();
   // Remove unused multipliers.
   $breakpoint->multipliers = array_filter($breakpoint->multipliers);
   if (is_null($breakpoint->multipliers)) {
@@ -503,9 +502,8 @@ function breakpoints_breakpoint_save(&$breakpoint) {
     $config->set($key, $value);
   }
   $config->save();
-  
+
   breakpoints_breakpoint_reset();
-  return $result;
 }
 
 /**
