@@ -83,6 +83,7 @@ where they will be automatically implemented on any profile running the respecti
 
 *Note*: from this same screen, breakpoints may also be fully exported in a feature-ready format using the "Export nodes" link.
 
+<!--
 
 Current Maintainers
 -------------------
@@ -105,6 +106,8 @@ Contact
 Project: https://www.drupal.org/project/breakpoints
 
 Issues: https://www.drupal.org/project/issues/breakpoints?categories=All
+
+-->
 
 License
 -------
