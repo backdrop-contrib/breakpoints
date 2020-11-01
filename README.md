@@ -83,21 +83,22 @@ where they will be automatically implemented on any profile running the respecti
 
 *Note*: from this same screen, breakpoints may also be fully exported in a feature-ready format using the "Export nodes" link.
 
-<!--
 
 Current Maintainers
 -------------------
 
-- [John Smith](https://github.com/attiks)
-- [Jane Smith](https://github.com/Jelle-S)
+- [Laryn Kragt Bakker](https://github.com/laryn)
+- [attiks](https://www.drupal.org/u/attiks)
+- [Jelle_S](https://www.drupal.org/u/jelle_s)
 
 Credits
 -------
 
-- Ported to Backdrop CMS by [Betty Boop](https://github.com/username).
-- Originally written for Drupal by [Bob Brown](https://github.com/username).
-- Based on the [MagicalCode project](https://github.com/example).
-- Sponsored by [TechNoCorp](https://example.com).
+- Ported to Backdrop CMS by [Laryn Kragt Bakker](https://github.com/laryn).
+- Originally written for Drupal by [attiks](https://www.drupal.org/u/attiks).
+- A list of all committers on [Drupal](https://www.drupal.org/node/1702648/committers).
+<!-- - Based on the [MagicalCode project](https://github.com/example).
+- Sponsored by [TechNoCorp](https://example.com). -->
 
 
 Contact
@@ -107,7 +108,6 @@ Project: https://www.drupal.org/project/breakpoints
 
 Issues: https://www.drupal.org/project/issues/breakpoints?categories=All
 
--->
 
 License
 -------
