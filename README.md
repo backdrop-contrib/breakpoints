@@ -86,7 +86,7 @@ feature-ready format using the "Export nodes" link.
 Breakpoints works hand-in-hand with a number of other modules for responsive
 solutions, which is recommended. These modules include:
 
-* [Picture](https://www.backdrop.org/project/picture)
+* [Picture](https://github.com/backdrop-contrib/picture)
 
 ## Issues
 
