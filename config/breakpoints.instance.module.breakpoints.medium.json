@@ -1,0 +1,15 @@
+{
+    "_config_name": "breakpoints.instance.module.breakpoints.medium",
+    "name": "medium",
+    "machine_name": "module.breakpoints.medium",
+    "breakpoint": "(min-width: 34em)",
+    "source": "breakpoints",
+    "source_type": "module",
+    "status": true,
+    "weight": 0,
+    "multipliers": {
+        "1x": "1x",
+        "2x": "2x"
+    },
+    "theme": ""
+}

@@ -11,7 +11,7 @@
 function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_name = '') {
   $form = array();
 
-  // In case of an export to theme, there will be a variable exported_breakpoints
+  // In case of an export to theme, there will be a variable exported_breakpoints.
   if (isset($form_state['exported_breakpoints']) && !empty($form_state['exported_breakpoints'])) {
     $form['exported_breakpoints'] = array(
       '#title' => t('Copy/Paste the following inside your theme.info file.'),
@@ -19,7 +19,7 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
       '#default_value' => $form_state['exported_breakpoints'],
     );
   }
-  // Global is the same as no group name
+  // Global is the same as no group name.
   $global = FALSE;
   if ($breakpoint_group_name == '' || $breakpoint_group_name == 'global') {
     $breakpoint_group_name = '';
@@ -145,7 +145,7 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
   }
 
   if ($global) {
-    // Add empty row
+    // Add empty row.
     $form['breakpoints']['new'] = array(
       'name' => array(
         '#type' => 'textfield',
@@ -188,12 +188,12 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
     }
   }
 
-  // Buttons
+  // Buttons.
   $form['buttons'] = array(
     '#type' => 'container',
   );
 
-  // Submit button
+  // Submit button.
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -218,9 +218,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
             '#markup' => l(
               t('Duplicate group'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/duplicate',
               array(
-              'query' => backdrop_get_destination(),
-              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
-            )
+                'query' => backdrop_get_destination(),
+                'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
+              )
             ),
           );
         }
@@ -240,9 +240,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
             '#markup' => l(
               t('Edit group breakpoints'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/edit',
               array(
-              'query' => backdrop_get_destination(),
-              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-edit-link')),
-            )
+                'query' => backdrop_get_destination(),
+                'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-edit-link')),
+              )
             ),
           );
           $form['buttons']['duplicate'] = array(
@@ -250,9 +250,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
             '#markup' => l(
               t('Duplicate group'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/duplicate',
               array(
-              'query' => backdrop_get_destination(),
-              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
-            )
+                'query' => backdrop_get_destination(),
+                'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
+              )
             ),
           );
         }
@@ -268,9 +268,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
           '#markup' => l(
             t('Edit group breakpoints'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/edit',
             array(
-            'query' => backdrop_get_destination(),
-            'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-edit-link')),
-          )
+              'query' => backdrop_get_destination(),
+              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-edit-link')),
+            )
           ),
         );
         $form['buttons']['duplicate'] = array(
@@ -278,9 +278,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
           '#markup' => l(
             t('Duplicate group'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/duplicate',
             array(
-            'query' => backdrop_get_destination(),
-            'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
-          )
+              'query' => backdrop_get_destination(),
+              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
+            )
           ),
         );
         break;
@@ -295,9 +295,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
           '#markup' => l(
             t('Edit group breakpoints'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/edit',
             array(
-            'query' => backdrop_get_destination(),
-            'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-edit-link')),
-          )
+              'query' => backdrop_get_destination(),
+              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-edit-link')),
+            )
           ),
         );
         $form['buttons']['duplicate'] = array(
@@ -305,9 +305,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
           '#markup' => l(
             t('Duplicate group'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/duplicate',
             array(
-            'query' => backdrop_get_destination(),
-            'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
-          )
+              'query' => backdrop_get_destination(),
+              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-duplicate-link')),
+            )
           ),
         );
         $form['buttons']['deletelink'] = array(
@@ -315,9 +315,9 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
           '#markup' => l(
             t('Delete this group'), 'admin/config/media/breakpoints/groups/' . $breakpoint_group_name . '/delete',
             array(
-            'query' => array('destination' => 'admin/config/media/breakpoints/groups'),
-            'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-delete-link')),
-          )
+              'query' => array('destination' => 'admin/config/media/breakpoints/groups'),
+              'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-delete-link')),
+            )
           ),
         );
         break;
@@ -453,7 +453,7 @@ function breakpoints_admin_breakpoints_submit($form, &$form_state) {
   $global_group = $group_name == '';
   $group = breakpoints_breakpoint_group_empty_object();
   if (!$global_group) {
-    // sort by weight, needed to store the right order in a group
+    // Sort by weight, needed to store the right order in a group.
     uasort($breakpoints, '_breakpoints_sort_by_weight_array');
   }
   $saved_breakpoints = array();
@@ -462,7 +462,7 @@ function breakpoints_admin_breakpoints_submit($form, &$form_state) {
       if (!empty($breakpointdata['name'])) {
         $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpointname);
         if ($breakpoint && $breakpointname != 'new') {
-          // only save the weight when on the global screen.
+          // Only save the weight when on the global screen.
           if ($global_group) {
             $breakpoint->weight = $breakpointdata['weight'];
           }
@@ -644,7 +644,6 @@ function breakpoints_add_style_form($form, &$form_state) {
     '#size' => '64',
     '#title' => t('Image style base name'),
     '#description' => t('The name is used in URLs for generated images. Use only lowercase alphanumeric characters, underscores (_), and hyphens (-).'),
-    '#element_validate' => array('image_style_name_validate'),
     '#required' => TRUE,
   );
   $breakpoints = breakpoints_breakpoint_load_all_active();
@@ -709,6 +708,7 @@ function breakpoints_add_style_form_submit($form, &$form_state) {
   foreach (array_filter($form_state['values']['breakpoints']) as $breakpoint) {
     $new_style = array(
       'name' => $form_state['values']['base_name'] . $breakpoint,
+      'label' => $base['label'] . ': ' . $breakpoint,
     );
     $style = image_style_save($new_style);
     if ($style) {
@@ -716,7 +716,7 @@ function breakpoints_add_style_form_submit($form, &$form_state) {
         $effect['isid'] = $style['isid'];
         $effect['data']['style_name'] = $new_style['name'];
         unset($effect['ieid']);
-        image_effect_save($effect);
+        image_effect_save($new_style['name'], $effect);
       }
     }
   }
@@ -773,12 +773,12 @@ function breakpoints_admin_breakpoint_group_edit_form($form, &$form_state, $mach
     '#required' => TRUE,
   );
 
-  // Buttons
+  // Buttons.
   $form['buttons'] = array(
     '#type' => 'container',
   );
 
-  // Submit button
+  // Submit button.
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -1044,12 +1044,12 @@ function breakpoints_admin_breakpoint_group_duplicate_form($form, &$form_state, 
     ),
   );
 
-  // Buttons
+  // Buttons.
   $form['buttons'] = array(
     '#type' => 'container',
   );
 
-  // Submit button
+  // Submit button.
   $form['buttons']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -1060,8 +1060,8 @@ function breakpoints_admin_breakpoint_group_duplicate_form($form, &$form_state, 
     '#markup' => l(
       t('Cancel'), 'admin/config/media/breakpoints/groups/' . $src_group->machine_name,
       array(
-      'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-cancel-link')),
-    )
+        'attributes' => array('class' => array('breakpoints-group-operations-link', 'breakpoints-group-operations-cancel-link')),
+      )
     ),
   );
 
@@ -1082,9 +1082,6 @@ function breakpoints_admin_breakpoint_group_duplicate_form_submit($form, &$form_
   $src_group = $form_state['#src_group'];
   if ($src_group) {
     breakpoints_breakpoints_group_duplicate($src_group, $name, $machine_name);
-    // Clear the Ctools export API cache.
-    //ctools_include('export');
-    //ctools_export_load_object_reset('breakpoint_group');
     menu_rebuild();
     $form_state['redirect'] = 'admin/config/media/breakpoints/groups/' . $machine_name;
     backdrop_set_message(t('The new group have been created'));

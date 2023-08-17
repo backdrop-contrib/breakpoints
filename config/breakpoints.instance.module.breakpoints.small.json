@@ -1,0 +1,15 @@
+{
+    "_config_name": "breakpoints.instance.module.breakpoints.small",
+    "name": "small",
+    "machine_name": "module.breakpoints.small",
+    "breakpoint": "(min-width: 0)",
+    "source": "breakpoints",
+    "source_type": "module",
+    "status": true,
+    "weight": 0,
+    "multipliers": {
+        "1x": "1x",
+        "2x": "2x"
+    },
+    "theme": ""
+}

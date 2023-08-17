@@ -6,6 +6,20 @@
  */
 
 /**
+ * Implements hook_enable().
+ * Import breakpoints from all enabled themes.
+ */
+function breakpoints_enable() {
+  $themes = list_themes();
+  foreach ($themes as $theme_key => $theme) {
+    if (!$theme->status) {
+      unset($themes[$theme_key]);
+    }
+  }
+  breakpoints_themes_enabled(array_keys($themes));
+}
+
+/**
  * Implements hook_update_last_removed().
  */
 function breakpoints_update_last_removed() {

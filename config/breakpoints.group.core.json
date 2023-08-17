@@ -1,0 +1,13 @@
+{
+    "_config_name": "breakpoints.group.core",
+    "machine_name": "core",
+    "name": "Core",
+    "breakpoints": [
+        "module.breakpoints.small",
+        "module.breakpoints.medium",
+        "module.breakpoints.large",
+        "module.breakpoints.xlarge",
+        "module.breakpoints.2xlarge"
+    ],
+    "type": "module"
+}
