@@ -2,7 +2,7 @@
     "_config_name": "breakpoints.instance.module.breakpoints.medium",
     "name": "medium",
     "machine_name": "module.breakpoints.medium",
-    "breakpoint": "(min-width: 34em)",
+    "breakpoint": "(min-width: 48em)",
     "source": "breakpoints",
     "source_type": "module",
     "status": true,

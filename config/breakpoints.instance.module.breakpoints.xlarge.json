@@ -2,7 +2,7 @@
     "_config_name": "breakpoints.instance.module.breakpoints.xlarge",
     "name": "xlarge",
     "machine_name": "module.breakpoints.xlarge",
-    "breakpoint": "(min-width: 62em)",
+    "breakpoint": "(min-width: 75em)",
     "source": "breakpoints",
     "source_type": "module",
     "status": true,
