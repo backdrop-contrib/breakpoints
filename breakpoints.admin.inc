@@ -1005,7 +1005,7 @@ function breakpoints_admin_multiplier_delete_form_submit($form, &$form_state) {
  */
 function breakpoints_admin_settings_form($form, &$form_state) {
   $form['#config'] = 'breakpoints.settings';
-  $form['breakpoints_hide_overridden_breakpoints'] = array(
+  $form['hide_overridden_breakpoints'] = array(
     '#type' => 'checkbox',
     '#description' => t('When overriding breakpoints defined by a theme, hide them on the overview page'),
     '#title' => t('Hide overridden breakpoints'),

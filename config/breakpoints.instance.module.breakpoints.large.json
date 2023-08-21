@@ -6,7 +6,7 @@
     "source": "breakpoints",
     "source_type": "module",
     "status": true,
-    "weight": 1,
+    "weight": 3,
     "multipliers": {
         "1x": "1x",
         "2x": "2x"
