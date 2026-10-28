@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Breakpoints - admin settings
@@ -997,16 +996,46 @@ function breakpoints_admin_multiplier_delete_form_submit($form, &$form_state) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Form callback for the breakpoints admin settings form.
  */
 function breakpoints_admin_settings_form($form, &$form_state) {
   $form['#config'] = 'breakpoints.settings';
   $form['hide_overridden_breakpoints'] = array(
     '#type' => 'checkbox',
-    '#description' => t('When overriding breakpoints defined by a theme, hide them on the overview page'),
     '#title' => t('Hide overridden breakpoints'),
+    '#description' => t('When overriding breakpoints defined by a theme, hide them on the overview page'),
     '#default_value' => config_get('breakpoints.settings', 'hide_overridden_breakpoints'),
+  );
+  $form['use_css_style_queries'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use CSS style media queries (experimental)'),
+    '#description' => t('Add active breakpoints to the page using CSS custom properties.'),
+    '#default_value' => config_get('breakpoints.settings', 'use_css_style_queries') ?? 0,
+  );
+  $form['css'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      'visible' => array(
+        ':input[name="use_css_style_queries"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $css_help = t('<p class="description">Breakpoints that are currently activated will be inserted into the page as CSS custom properties. You can use container style queries to respond to these breakpoints in your CSS. For example, using the machine names of an active breakpoint in the following way:</p>');
+  $css_help .= "<pre>";
+  $css_help .= "<code>.sample__selector {</code>";
+  $css_help .= "<br />&nbsp;&nbsp;<code>@container style(--breakpoint: <em>your_breakpoint_machine_name</em>) { </code>";
+  $css_help .= "<br />&nbsp;&nbsp;&nbsp;&nbsp;<code>...</code>";
+  $css_help .= "<br />&nbsp;&nbsp;<code>} </code>";
+  $css_help .= "<br /><code>} </code>";
+  $css_help .= "</pre>";
+  $css_help .= t('<p class="description">You will want to minimize the number of active breakpoints, and order them appropriately from smallest (top) to largest (bottom), as the order they are added to the page will affect how the styles cascade.</p>');
+  $form['css']['help'] = array(
+    '#markup' => $css_help,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="use_css_style_queries"]' => array('checked' => TRUE),
+      ),
+    ),
   );
   return system_settings_form($form);
 }
