@@ -1008,7 +1008,7 @@ function breakpoints_admin_settings_form($form, &$form_state) {
   );
   $form['use_css_style_queries'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Use CSS style media queries'),
+    '#title' => t('Use CSS style media queries (experimental)'),
     '#description' => t('Add active breakpoints to the page using CSS custom properties.'),
     '#default_value' => config_get('breakpoints.settings', 'use_css_style_queries') ?? 0,
   );
