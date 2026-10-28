@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Tests for breakpoints.module
@@ -8,7 +7,10 @@
 /**
  * Base class for Breakpoint tests.
  */
-abstract class BreakpointsTestCase extends DrupalWebTestCase {
+abstract class BreakpointsTestCase extends BackdropWebTestCase {
+  /**
+ *
+ */
   function  setUp() {
     $modules = func_get_args();
     if (isset($modules[0]) && is_array($modules[0])) {
@@ -21,22 +23,16 @@ abstract class BreakpointsTestCase extends DrupalWebTestCase {
   /**
    * Verify that a breakpoint is properly stored.
    */
-  function verifyBreakpoint($breakpoint, $in_database = TRUE) {
+  function verifyBreakpoint($breakpoint, $in_config = TRUE) {
     $t_args = array('%breakpoint' => $breakpoint->name);
     $properties = array('name', 'breakpoint', 'source', 'source_type', 'status', 'weight', 'multipliers');
-    if ($in_database) {
-      $properties[] = 'id';
-    }
+    $db_breakpoint = config('breakpoints.instance.' . $breakpoint->machine_name);
     $assert_group = t('Breakpoints API');
-    // Verify text format database record.
-    $db_breakpoint = db_select('breakpoints', 'b')
-      ->fields('b')
-      ->condition('machine_name', $breakpoint->machine_name)
-      ->execute()
-      ->fetchObject();
-    $db_breakpoint->multipliers = unserialize($db_breakpoint->multipliers);
+    if ($in_config) {
+      $this->assertFalse($db_breakpoint->isNew(), t('Configuration: Breakpoint %breakpoint exists.', $t_args), $assert_group);
+    }
     foreach ($properties as $property) {
-      $this->assertEqual($db_breakpoint->{$property}, $breakpoint->{$property}, t('Database: Proper ' . $property . ' for breakpoint %breakpoint.', $t_args), $assert_group);
+      $this->assertEqual($db_breakpoint->get($property), $breakpoint->{$property}, t('Database: Proper ' . $property . ' for breakpoint %breakpoint.', $t_args), $assert_group);
     }
 
     // Verify breakpoints_breakpoint_load_by_fullkey().
@@ -51,15 +47,6 @@ abstract class BreakpointsTestCase extends DrupalWebTestCase {
  * Tests for breakpoints CRUD operations.
  */
 class BreakpointsCRUDTestCase extends BreakpointsTestCase {
-
-  public static function getInfo() {
-    return array(
-      'name' => 'Breakpoints CRUD operations',
-      'description' => 'Test creation, loading, updating, deleting of breakpoints.',
-      'group' => 'Breakpoints',
-    );
-  }
-
   /**
    * Test CRUD operations for breakpoints.
    */
@@ -96,8 +83,8 @@ class BreakpointsCRUDTestCase extends BreakpointsTestCase {
 
     // Delete the breakpoint.
     breakpoints_breakpoint_delete($breakpoint);
-    $db_breakpoint = db_select('breakpoints', 'b')->fields('b')->condition('machine_name', $breakpoint->machine_name)->execute()->fetchObject();
-    $this->assertFalse($db_breakpoint, t('Database: Deleted breakpoint no longer exists'), t('Breakpoints API'));
+    $config = config('breakpoints.instance.' . $breakpoint->machine_name);
+    $this->assertFalse($config, t('Database: Deleted breakpoint no longer exists'), t('Breakpoints API'));
     $this->assertFalse(breakpoints_breakpoint_load_by_fullkey($breakpoint->machine_name), t('breakpoints_breakpoint_load_by_fullkey: Loading a deleted breakpoint returns false.'), t('Breakpoints API'));
   }
 }
@@ -107,23 +94,18 @@ class BreakpointsCRUDTestCase extends BreakpointsTestCase {
  */
 class BreakpointsAdminTestCase extends BreakpointsTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Breakpoints administration functionality',
-      'description' => 'Thoroughly test the administrative interface of the breakpoints module.',
-      'group' => 'Breakpoints',
-    );
-  }
-
+  /**
+ *
+ */
   function  setUp() {
     parent::setUp();
 
     // Create user.
-    $this->admin_user = $this->drupalCreateUser(array(
+    $this->admin_user = $this->backdropCreateUser(array(
       'administer breakpoints',
     ));
 
-    $this->drupalLogin($this->admin_user);
+      $this->backdropLogin($this->admin_user);
   }
 
   /**
@@ -131,59 +113,59 @@ class BreakpointsAdminTestCase extends BreakpointsTestCase {
    */
   function testBreakpointAdmin() {
     // Add breakpoint.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $name = $this->randomName();
     $mediaquery = '(min-width: 600px)';
     $edit = array(
       'breakpoints[new][name]' => $name,
-      'breakpoints[new][machine_name]' => drupal_strtolower($name),
+      'breakpoints[new][machine_name]' => backdrop_strtolower($name),
       'breakpoints[new][breakpoint]' => $mediaquery,
     );
 
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
-    $machine_name = BREAKPOINTS_SOURCE_TYPE_CUSTOM . '.user.' . drupal_strtolower($name);
+    $machine_name = BREAKPOINTS_SOURCE_TYPE_CUSTOM . '.user.' . backdrop_strtolower($name);
     // Verify the breakpoint was saved and verify default weight of the breakpoint.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertFieldByName("breakpoints[$machine_name][weight]", 0, t('Breakpoint weight was saved.'));
 
     // Change the weight of the breakpoint.
     $edit = array(
       "breakpoints[$machine_name][weight]" => 5,
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     $this->assertFieldByName("breakpoints[$machine_name][weight]", 5, t('Breakpoint weight was saved.'));
 
     // Submit the form.
-    $this->drupalGet('admin/config/media/breakpoints');
-    $this->drupalPost(NULL, array(), t('Save'));
+    $this->backdropGet('admin/config/media/breakpoints');
+    $this->backdropPost(NULL, array(), t('Save'));
 
     // Verify that the custom weight of the breakpoint has been retained.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertFieldByName("breakpoints[$machine_name][weight]", 5, t('Breakpoint weight was retained.'));
 
     // Change the multipliers of the breakpoint.
     $edit = array(
       "breakpoints[$machine_name][multipliers][1.5x]" => "1.5x",
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
-    $id = drupal_clean_css_identifier('edit-breakpoints-' . $machine_name . '-multipliers-');
+    $this->backdropPost(NULL, $edit, t('Save'));
+    $id = backdrop_clean_css_identifier('edit-breakpoints-' . $machine_name . '-multipliers-');
     $this->assertFieldChecked($id . '15x', t('Breakpoint multipliers were saved.'));
     $this->assertNoFieldChecked($id . '2x', t('Breakpoint multipliers were saved.'));
 
     // Submit the form.
-    $this->drupalGet('admin/config/media/breakpoints');
-    $this->drupalPost(NULL, array(), t('Save'));
+    $this->backdropGet('admin/config/media/breakpoints');
+    $this->backdropPost(NULL, array(), t('Save'));
 
     // Verify that the custom weight of the breakpoint has been retained.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertFieldChecked($id . '15x', t('Breakpoint multipliers were retained.'));
     $this->assertNoFieldChecked($id . '2x', t('Breakpoint multipliers were retained.'));
 
     // Disable breakpoint.
     $this->assertLinkByHref('admin/config/media/breakpoints/disable/' . $machine_name);
-    $this->drupalGet('admin/config/media/breakpoints/disable/' . $machine_name);
-    $this->drupalPost(NULL, array(), t('Confirm'));
+    $this->backdropGet('admin/config/media/breakpoints/disable/' . $machine_name);
+    $this->backdropPost(NULL, array(), t('Confirm'));
 
     // Verify that the breakpoint is disabled.
     $this->assertLinkByHref('admin/config/media/breakpoints/enable/' . $machine_name, 0, t('Breakpoint was disabled.'));
@@ -192,21 +174,21 @@ class BreakpointsAdminTestCase extends BreakpointsTestCase {
     // breakpoint but with a different human readable name.
     $edit = array(
       'breakpoints[new][name]' => 'New Breakpoint',
-      'breakpoints[new][machine_name]' => drupal_strtolower($name),
+      'breakpoints[new][machine_name]' => backdrop_strtolower($name),
       'breakpoints[new][breakpoint]' => $mediaquery,
       'breakpoints[new][multipliers][1.5x]' => 0,
       'breakpoints[new][multipliers][2x]' => 0,
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     $this->assertText('The machine-readable name is already in use. It must be unique.');
 
     // Delete breakpoint.
     $this->assertLinkByHref('admin/config/media/breakpoints/delete/' . $machine_name);
-    $this->drupalGet('admin/config/media/breakpoints/delete/' . $machine_name);
-    $this->drupalPost(NULL, array(), t('Confirm'));
+    $this->backdropGet('admin/config/media/breakpoints/delete/' . $machine_name);
+    $this->backdropPost(NULL, array(), t('Confirm'));
 
     // Verify that deleted breakpoint no longer exists.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertNoFieldByName('breakpoints[' . $machine_name . '][name]', '', t('Deleted breakpoint no longer exists'));
   }
 
@@ -229,7 +211,7 @@ class BreakpointsAdminTestCase extends BreakpointsTestCase {
       '2x' => 0,
     );
 
-    // Import a breakpoint;
+    // Import a breakpoint;.
     $importstring = array();
     $importstring[] = '$breakpoint = new stdClass();';
     $importstring[] = '$breakpoint->disabled = FALSE; /* Edit this to true to make a default breakpoint disabled initially */';
@@ -246,21 +228,21 @@ class BreakpointsAdminTestCase extends BreakpointsTestCase {
     $importstring[] = '  \'2x\' => 0,';
     $importstring[] = ');';
 
-    $this->drupalGet('admin/config/media/breakpoints/groups/import-breakpoint');
+    $this->backdropGet('admin/config/media/breakpoints/groups/import-breakpoint');
     $edit = array(
       "import" => implode("\n", $importstring),
     );
-    $this->drupalPost(NULL, $edit, t('Import'));
+    $this->backdropPost(NULL, $edit, t('Import'));
 
     // Verify the breakpoint was imported.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertField('breakpoints[' . $breakpoint->machine_name . '][name]', t('Breakpoint imported correctly.'));
 
     // Verify the breakpoint is in the database, is loadable and has the correct data.
     $this->verifyBreakpoint($breakpoint, FALSE);
 
     // Verify the breakpoint exports correctly.
-    $this->drupalGet('admin/config/media/breakpoints/export/' . $breakpoint->machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/export/' . $breakpoint->machine_name);
     foreach ($importstring as $importline) {
       $importline = trim($importline);
       if (!empty($importline)) {
@@ -274,8 +256,11 @@ class BreakpointsAdminTestCase extends BreakpointsTestCase {
 /**
  * Base class for Breakpoint Group tests.
  */
-abstract class BreakpointGroupTestCase extends DrupalWebTestCase {
-  function  setUp() {
+abstract class BreakpointGroupTestCase extends BackdropWebTestCase {
+  /**
+ *
+ */
+  function setUp() {
     $modules = func_get_args();
     if (isset($modules[0]) && is_array($modules[0])) {
       $modules = $modules[0];
@@ -287,24 +272,19 @@ abstract class BreakpointGroupTestCase extends DrupalWebTestCase {
   /**
    * Verify that a breakpoint is properly stored.
    */
-  function verifyBreakpointGroup($group, $in_database = TRUE) {
+  function verifyBreakpointGroup($group, $in_config = TRUE) {
     $t_args = array('%group' => $group->name);
     $properties = array('name', 'machine_name', 'breakpoints');
-    if ($in_database) {
-      $properties[] = 'id';
-    }
+    $config = config('breakpoints.instance.' . $group->machine_name);
     $assert_group = t('Breakpoints API');
-    // Verify text format database record.
-    $db_group = db_select('breakpoint_group', 'bg')
-      ->fields('bg')
-      ->condition('machine_name', $group->machine_name)
-      ->execute()
-      ->fetchObject();
-    $db_group->breakpoints = unserialize($db_group->breakpoints);
+    if ($in_config) {
+      $this->assertFalse($config->isNew(), t('Configuration: Breakpoint group %group exists.', $t_args), $assert_group);
+    }
     foreach ($properties as $property) {
-      $this->assertEqual($db_group->{$property}, $group->{$property}, t('Database: Proper ' . $property . ' for breakpoint group %group.', $t_args), $assert_group);
+      $this->assertEqual($config->get($property), $group->{$property}, t('Database: Proper ' . $property . ' for breakpoint group %group.', $t_args), $assert_group);
     }
 
+    backdrop_static_reset('breakpoints_breakpoint_group_load_all');
     // Verify breakpoints_breakpoint_group_load().
     $load_group = breakpoints_breakpoint_group_load($group->machine_name);
     foreach ($properties as $property) {
@@ -317,14 +297,6 @@ abstract class BreakpointGroupTestCase extends DrupalWebTestCase {
  * Tests for breakpoint group CRUD operations.
  */
 class BreakpointGroupCRUDTestCase extends BreakpointGroupTestCase {
-
-  public static function getInfo() {
-    return array(
-      'name' => 'Breakpoint Group CRUD operations',
-      'description' => 'Test creation, loading, updating, deleting of breakpoint groups.',
-      'group' => 'Breakpoints',
-    );
-  }
 
   /**
    * Test CRUD operations for breakpoint groups.
@@ -353,7 +325,7 @@ class BreakpointGroupCRUDTestCase extends BreakpointGroupTestCase {
     // Add a breakpoint group with minimum data only.
     $group = new stdClass();
     $group->name = $this->randomName();
-    $group->machine_name = drupal_strtolower($group->name);
+    $group->machine_name = backdrop_strtolower($group->name);
     $group->breakpoints = array();
     breakpoints_breakpoint_group_save($group);
     $this->verifyBreakpointGroup($group);
@@ -365,8 +337,8 @@ class BreakpointGroupCRUDTestCase extends BreakpointGroupTestCase {
 
     // Delete the breakpoint group.
     breakpoints_breakpoint_group_delete($group);
-    $db_group = db_select('breakpoint_group', 'bg')->fields('bg')->condition('machine_name', $group->machine_name)->execute()->fetchObject();
-    $this->assertFalse($db_group, t('Database: Deleted breakpoint group no longer exists'), t('Breakpoints API'));
+    $config = config('breakpoints.instance.' . $group->machine_name);
+    $this->assertFalse($config, t('Database: Deleted breakpoint group no longer exists'), t('Breakpoints API'));
     $this->assertFalse(breakpoints_breakpoint_group_load($group->machine_name), t('breakpoints_breakpoint_group_load: Loading a deleted breakpoint group returns false.'), t('Breakpoints API'));
   }
 }
@@ -376,23 +348,25 @@ class BreakpointGroupCRUDTestCase extends BreakpointGroupTestCase {
  */
 class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Breakpoint Group administration functionality',
-      'description' => 'Thoroughly test the administrative interface of the breakpoints module.',
-      'group' => 'Breakpoints',
-    );
-  }
+  /**
+   * @var User|false
+   *
+   * Admin user for testing.
+   */
+  public $admin_user;
 
+  /**
+ *
+ */
   function  setUp() {
     parent::setUp();
 
     // Create user.
-    $this->admin_user = $this->drupalCreateUser(array(
+    $this->admin_user = $this->backdropCreateUser(array(
       'administer breakpoints',
     ));
 
-    $this->drupalLogin($this->admin_user);
+      $this->backdropLogin($this->admin_user);
   }
 
   /**
@@ -420,9 +394,9 @@ class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
       $breakpoints[$breakpoint->machine_name] = $breakpoint;
     }
     // Add breakpoint group.
-    $this->drupalGet('admin/config/media/breakpoints/groups/add');
+    $this->backdropGet('admin/config/media/breakpoints/groups/add');
     $name = $this->randomName();
-    $machine_name = drupal_strtolower($name);
+    $machine_name = backdrop_strtolower($name);
     $breakpoint = reset($breakpoints);
     $edit = array(
       'name' => $name,
@@ -430,25 +404,25 @@ class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
       'breakpoints[' . $breakpoint->machine_name . ']' => $breakpoint->machine_name,
     );
 
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     // Verify the breakpoint was saved.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name);
     $this->assertResponse(200, t('Breakpoint group was saved.'));
 
     // Verify the breakpoint was attached to the group.
     $this->assertField('breakpoints[' . $breakpoint->machine_name . '][name]', t('The Breakpoint was added.'));
 
     // Add breakpoints to the breakpoint group.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name . '/edit');
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name . '/edit');
     $edit = array();
     foreach ($breakpoints as $key => $breakpoint) {
       $edit['breakpoints[' . $key . ']'] = $key;
     }
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     // Verify the breakpoints were attached to the group.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name);
     foreach ($breakpoints as $key => $breakpoint) {
       $this->assertField('breakpoints[' . $key . '][name]', t('The Breakpoint was added.'));
     }
@@ -456,50 +430,50 @@ class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
     // Change the order breakpoints of the breakpoints within the breakpoint group.
     $breakpoint = end($breakpoints);
     $edit = array(
-      "breakpoints[{$breakpoint->machine_name}][weight]" => 0,
+      "breakpoints[{$breakpoint->machine_name}][weight]" => '-1',
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
-    $this->assertFieldByName("breakpoints[{$breakpoint->machine_name}][weight]", 0, t('Breakpoint weight was saved.'));
+    $this->backdropPost(NULL, $edit, t('Save'));
+    $this->assertFieldByName("breakpoints[{$breakpoint->machine_name}][weight]", '-1', t('Breakpoint weight was saved.'));
 
     // Submit the form.
-    $this->drupalGet('admin/config/media/breakpoints');
-    $this->drupalPost(NULL, array(), t('Save'));
+    $this->backdropGet('admin/config/media/breakpoints');
+    $this->backdropPost(NULL, array(), t('Save'));
 
     // Verify that the custom weight of the breakpoint has been retained.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name);
-    $this->assertFieldByName("breakpoints[{$breakpoint->machine_name}][weight]", 0, t('Breakpoint weight was retained.'));
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name);
+    $this->assertFieldByName("breakpoints[{$breakpoint->machine_name}][weight]", '-1', t('Breakpoint weight was retained.'));
 
     // Verify that the weight has only changed within the group.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertFieldByName("breakpoints[{$breakpoint->machine_name}][weight]", $breakpoint->weight, t('Breakpoint weight has only changed within the group.'));
 
     // Change the multipliers of the breakpoint within the group.
     $edit = array(
       "breakpoints[{$breakpoint->machine_name}][multipliers][1.5x]" => "1.5x",
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
-    $id = drupal_clean_css_identifier('edit-breakpoints-' . $breakpoint->machine_name . '-multipliers-');
+    $this->backdropPost(NULL, $edit, t('Save'));
+    $id = backdrop_clean_css_identifier('edit-breakpoints-' . $breakpoint->machine_name . '-multipliers-');
     $this->assertFieldChecked($id . '15x', t('Breakpoint multipliers were saved.'));
     $this->assertNoFieldChecked($id . '2x', t('Breakpoint multipliers were saved.'));
 
     // Submit the form.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name);
-    $this->drupalPost(NULL, array(), t('Save'));
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name);
+    $this->backdropPost(NULL, array(), t('Save'));
 
     // Verify that the multipliers of the breakpoint has been retained.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name);
     $this->assertFieldChecked($id . '15x', t('Breakpoint multipliers were retained.'));
     $this->assertNoFieldChecked($id . '2x', t('Breakpoint multipliers were retained.'));
 
     // Verify that the multipliers only changed within the group.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     $this->assertFieldChecked($id . '15x', t('Breakpoint multipliers were retained.'));
     $this->assertNoFieldChecked($id . '2x', t('Breakpoint multipliers were retained.'));
 
     // Attempt to create a breakpoint group of the same machine name as the disabled
     // breakpoint but with a different human readable name.
     // Add breakpoint group.
-    $this->drupalGet('admin/config/media/breakpoints/groups/add');
+    $this->backdropGet('admin/config/media/breakpoints/groups/add');
     $breakpoint = reset($breakpoints);
     $edit = array(
       'name' => $this->randomName(),
@@ -507,15 +481,15 @@ class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
       'breakpoints[' . $breakpoint->machine_name . ']' => $breakpoint->machine_name,
     );
 
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
     $this->assertText('The machine-readable name is already in use. It must be unique.');
 
     // Delete breakpoint.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name . '/delete');
-    $this->drupalPost(NULL, array(), t('Confirm'));
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name . '/delete');
+    $this->backdropPost(NULL, array(), t('Confirm'));
 
     // Verify that deleted breakpoint no longer exists.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $machine_name);
     $this->assertResponse(404, t('Breakpoint group was deleted.'));
   }
 
@@ -692,21 +666,21 @@ class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
     $importstring[] = '$breakpoint_group->type = \'custom\';';
     $importstring[] = '$breakpoint_group->overridden = 0;';
 
-    $this->drupalGet('admin/config/media/breakpoints/groups/import');
+    $this->backdropGet('admin/config/media/breakpoints/groups/import');
     $edit = array(
       "import" => implode("\n", $importstring),
     );
-    $this->drupalPost(NULL, $edit, t('Import'));
+    $this->backdropPost(NULL, $edit, t('Import'));
 
     // Verify the breakpoint group was imported.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name);
     $this->assertResponse(200, t('Breakpoint group imported correctly'));
 
     // Verify the breakpoint group is in the database, is loadable and has the correct data.
     $this->verifyBreakpointGroup($breakpoint_group, FALSE);
 
     // Verify the breakpoint group exports correctly.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name . '/export');
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name . '/export');
     foreach ($importstring as $importline) {
       $importline = trim($importline);
       if (!empty($importline)) {
@@ -721,23 +695,26 @@ class BreakpointGroupAdminTestCase extends BreakpointGroupTestCase {
  * Test breakpoints provided by themes.
  */
 class BreakpointsThemeTestCase extends BreakpointGroupTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Breakpoint Theme functionality',
-      'description' => 'Thoroughly test the breakpoints provided by a theme.',
-      'group' => 'Breakpoints',
-    );
-  }
 
+  /**
+   * The admin user for this test case.
+   *
+   * @var User|false
+   */
+  public $admin_user;
+
+  /**
+   * {@inheritdoc}
+   */
   public function  setUp() {
     parent::setUp('breakpoints_theme_test');
     theme_enable(array('breakpoints_test_theme'));
     // Create user.
-    $this->admin_user = $this->drupalCreateUser(array(
+    $this->admin_user = $this->backdropCreateUser(array(
       'administer breakpoints',
     ));
 
-    $this->drupalLogin($this->admin_user);
+    $this->backdropLogin($this->admin_user);
   }
 
   /**
@@ -761,14 +738,13 @@ class BreakpointsThemeTestCase extends BreakpointGroupTestCase {
     $this->verifyBreakpointGroup($breakpoint_group, FALSE);
 
     // Override the breakpoints.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name);
-    $this->drupalPost(NULL, array(), t('Override theme breakpoints'));
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name);
+    $this->backdropPost(NULL, array(), t('Override theme breakpoints'));
 
-    // Clear CTools cache, since drupalGet and drupalPost are different requests than the request
+    // Clear CTools cache, since backdropGet and backdropPost are different requests than the request
     // this test is running in, the group object is still in the static cache, so we need to clear
     // it manually.
-    ctools_export_load_object_reset('breakpoint_group');
-
+    // ctools_export_load_object_reset('breakpoint_group');.
     // Verify the group is overridden.
     $breakpoint_group->breakpoints = array(
       'custom.breakpoints_test_theme.mobile',
@@ -780,7 +756,7 @@ class BreakpointsThemeTestCase extends BreakpointGroupTestCase {
     $this->verifyBreakpointGroup($breakpoint_group, FALSE);
 
     // Verify there is no override button for this group anymore.
-    $this->drupalGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name);
+    $this->backdropGet('admin/config/media/breakpoints/groups/' . $breakpoint_group->machine_name);
     $this->assertNoFieldById('edit-override');
   }
 }
@@ -788,26 +764,27 @@ class BreakpointsThemeTestCase extends BreakpointGroupTestCase {
 /**
  * Test breakpoint multipliers.
  */
-class BreakpointMultipliersTestCase extends DrupalWebTestCase {
+class BreakpointMultipliersTestCase extends BackdropWebTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Breakpoint Multiplier functionality',
-      'description' => 'Thoroughly test the breakpoint multiplier functionality (CRUD).',
-      'group' => 'Breakpoints',
-    );
-  }
+  /**
+   * @var User|false
+   *   The admin user object for this test case.
+   */
+  public $admin_user;
 
+  /**
+   *
+   */
   public function  setUp() {
     parent::setUp('breakpoints', 'breakpoints_theme_test');
     // Enable our test theme so we have breakpoints to test on.
     theme_enable(array('breakpoints_test_theme'));
     // Create user.
-    $this->admin_user = $this->drupalCreateUser(array(
+    $this->admin_user = $this->backdropCreateUser(array(
       'administer breakpoints',
     ));
 
-    $this->drupalLogin($this->admin_user);
+    $this->backdropLogin($this->admin_user);
   }
 
   /**
@@ -815,7 +792,7 @@ class BreakpointMultipliersTestCase extends DrupalWebTestCase {
    */
   public function testBreakpointMultipliers() {
     // Verify the default multipliers are visible.
-    $this->drupalGet('admin/config/media/breakpoints/multipliers');
+    $this->backdropGet('admin/config/media/breakpoints/multipliers');
     $settings = breakpoints_settings();
     foreach ($settings->multipliers as $multiplier) {
       $this->assertRaw($multiplier, t('Default multiplier %multiplier found', array('%multiplier' => $multiplier)));
@@ -825,17 +802,17 @@ class BreakpointMultipliersTestCase extends DrupalWebTestCase {
     }
 
     // Verify the '1x' multiplier can't be deleted.
-    $this->drupalGet('admin/config/media/breakpoints/multipliers/1x/delete');
+    $this->backdropGet('admin/config/media/breakpoints/multipliers/1x/delete');
     $this->assertText(t('Multiplier 1x can not be deleted!'), t('Multiplier 1x can not be deleted'));
     $this->assertNoFieldById('edit-submit');
 
     // Add a multiplier.
-    $new_multiplier = drupal_strtolower($this->randomName());
-    $this->drupalGet('admin/config/media/breakpoints/multipliers');
+    $new_multiplier = backdrop_strtolower($this->randomName());
+    $this->backdropGet('admin/config/media/breakpoints/multipliers');
     $edit = array(
       'multipliers[new]' => $new_multiplier,
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     // Verify the multiplier was added to the database.
     $settings = breakpoints_settings();
@@ -845,11 +822,11 @@ class BreakpointMultipliersTestCase extends DrupalWebTestCase {
     $this->assertFieldByName('multipliers[' . $new_multiplier . ']', $new_multiplier);
 
     // Update a multiplier.
-    $updated_multiplier = drupal_strtolower($this->randomName());
+    $updated_multiplier = backdrop_strtolower($this->randomName());
     $edit = array(
       'multipliers[' . $new_multiplier . ']' => $updated_multiplier,
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     // Verify the multiplier was updated in the database.
     $settings = breakpoints_settings();
@@ -862,7 +839,7 @@ class BreakpointMultipliersTestCase extends DrupalWebTestCase {
     $new_multiplier = $updated_multiplier;
 
     // Verify the default multipliers are visible on the global breakpoints page.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     foreach (breakpoints_breakpoint_load_all() as $breakpoint) {
       foreach ($settings->multipliers as $multiplier) {
         if ($multiplier != '1x') {
@@ -880,24 +857,24 @@ class BreakpointMultipliersTestCase extends DrupalWebTestCase {
       'breakpoints[breakpoints.theme.breakpoints_test_theme.narrow][multipliers][1.5x]' => 1,
       'breakpoints[breakpoints.theme.breakpoints_test_theme.narrow][multipliers][' . $new_multiplier . ']' => 1,
     );
-    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->backdropPost(NULL, $edit, t('Save'));
 
     // Verify the checkbox for the enabled multipliers is checked on the global breakpoints page.
     $this->assertFieldChecked('edit-breakpoints-breakpointsthemebreakpoints-test-themenarrow-multipliers-15x');
-    $this->assertFieldChecked('edit-breakpoints-breakpointsthemebreakpoints-test-themenarrow-multipliers-' . drupal_clean_css_identifier($new_multiplier));
+    $this->assertFieldChecked('edit-breakpoints-breakpointsthemebreakpoints-test-themenarrow-multipliers-' . backdrop_clean_css_identifier($new_multiplier));
 
     // Verify the checkbox for the enabled multipliers is checked on the breakpoints page of a group.
-    $this->drupalGet('admin/config/media/breakpoints/groups/breakpoints_test_theme');
+    $this->backdropGet('admin/config/media/breakpoints/groups/breakpoints_test_theme');
     $this->assertFieldChecked('edit-breakpoints-breakpointsthemebreakpoints-test-themenarrow-multipliers-15x');
-    $this->assertFieldChecked('edit-breakpoints-breakpointsthemebreakpoints-test-themenarrow-multipliers-' . drupal_clean_css_identifier($new_multiplier));
+    $this->assertFieldChecked('edit-breakpoints-breakpointsthemebreakpoints-test-themenarrow-multipliers-' . backdrop_clean_css_identifier($new_multiplier));
 
     // Delete a multiplier.
-    $this->drupalGet('admin/config/media/breakpoints/multipliers/' . $new_multiplier . '/delete');
-    $this->drupalPost(NULL, array(), t('Confirm'));
+    $this->backdropGet('admin/config/media/breakpoints/multipliers/' . $new_multiplier . '/delete');
+    $this->backdropPost(NULL, array(), t('Confirm'));
     $this->assertText('Multiplier ' . $new_multiplier . ' was deleted');
 
     // Verify the deleted multiplier is no longer visible on the multiplier overview page.
-    $this->drupalGet('admin/config/media/breakpoints/multipliers');
+    $this->backdropGet('admin/config/media/breakpoints/multipliers');
     $this->assertNoFieldByName('multipliers[' . $new_multiplier . ']');
 
     // Verify the deleted multiplier is deleted from the database.
@@ -905,7 +882,7 @@ class BreakpointMultipliersTestCase extends DrupalWebTestCase {
     $this->assertFalse(in_array($new_multiplier, $settings->multipliers), t('Multiplier %multiplier was deleted.', array('%multiplier' => $new_multiplier)));
 
     // Verify the deleted multiplier is no longer visible on the breakpoints page.
-    $this->drupalGet('admin/config/media/breakpoints');
+    $this->backdropGet('admin/config/media/breakpoints');
     foreach (breakpoints_breakpoint_load_all() as $breakpoint) {
       $this->assertNoFieldByName('breakpoints[' . $breakpoint->machine_name . '][multipliers][' . $new_multiplier . ']');
     }

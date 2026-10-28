@@ -102,7 +102,7 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
   foreach ($breakpoints as $key => $breakpoint) {
     if ($breakpoint->source_type == BREAKPOINTS_SOURCE_TYPE_THEME) {
       $bp_group = breakpoints_breakpoint_group_load($breakpoint->source);
-      if ($bp_group->overridden && config_get('breakpoints.settings', 'hide_overridden_breakpoints') && $global) {
+      if (!empty($bp_group->overridden) && config_get('breakpoints.settings', 'hide_overridden_breakpoints') && $global) {
         continue;
       }
     }
@@ -202,7 +202,7 @@ function breakpoints_admin_breakpoints($form, &$form_state, $breakpoint_group_na
   if (!$global) {
     switch ($breakpoint_group->type) {
       case BREAKPOINTS_SOURCE_TYPE_THEME:
-        if (!$breakpoint_group->overridden) {
+        if (empty($breakpoint_group->overridden)) {
           $form['buttons']['override'] = array(
             '#type' => 'submit',
             '#value' => t('Override theme breakpoints'),
@@ -796,23 +796,21 @@ function breakpoints_admin_breakpoint_group_edit_form($form, &$form_state, $mach
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Display a message when there are no breakpoints defined.
  */
 function breakpoints_admin_breakpoint_group_edit_form_no_breakpoints() {
   $form = array();
 
   $form['info'] = array(
     '#type' => 'markup',
-    '#markup' => t("There're no breakpoints defined, you'll have to !create them first.", array('!create' => l(t('create'), 'admin/config/media/breakpoints'))),
+    '#markup' => t("There are no breakpoints defined, you'll have to !create them first.", array('!create' => l(t('create'), 'admin/config/media/breakpoints'))),
   );
 
   return $form;
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Validate the breakpoint group edit form.
  */
 function breakpoints_admin_breakpoint_group_edit_form_validate($form, &$form_state) {
   $name = $form_state['values']['machine_name'];
@@ -820,8 +818,7 @@ function breakpoints_admin_breakpoint_group_edit_form_validate($form, &$form_sta
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Submit handler for the breakpoint group edit form.
  */
 function breakpoints_admin_breakpoint_group_edit_form_submit($form, &$form_state) {
   $machine_name = $form_state['values']['machine_name'];

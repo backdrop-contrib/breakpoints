@@ -1,9 +1,3 @@
-[BreakpointsTestCase]
-name = BreakpointsTestCase
-description = BreakpointsTestCase
-group = breakpoints
-file = breakpoints.test
-
 [BreakpointsCRUDTestCase]
 name = Breakpoints CRUD operations
 description = Test creation, loading, updating, deleting of breakpoints.

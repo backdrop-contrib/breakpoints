@@ -25,8 +25,9 @@ function breakpoints_permission() {
 
 /**
  * Implements hook_themes_enabled().
- * Import breakpoints from all new enabled themes.
- * Do not use breakpoints_breakpoints_group_reload_from_theme as is clears the cache.
+ *
+ * Import breakpoints from all new enabled themes. Do not use
+ * `breakpoints_breakpoints_group_reload_from_theme` as it clears the cache.
  */
 function breakpoints_themes_enabled($theme_list, $rebuild_menu = TRUE) {
   $themes = list_themes();
@@ -358,7 +359,8 @@ function _breakpoints_breakpoint_load_all_callback($reset = FALSE) {
 
   if (!isset($breakpoints)) {
     if (!$reset && $cache = cache_get('breakpoints:breakpoints')) {
-      return ($breakpoints = $cache->data);
+      $breakpoints = $cache->data;
+      return ($breakpoints);
     }
     else {
       $config_names = config_get_names_with_prefix('breakpoints.instance.');
@@ -377,10 +379,10 @@ function _breakpoints_breakpoint_load_all_callback($reset = FALSE) {
         $breakpoints[$instance]->multipliers = $config->get('multipliers');
 
       }
-      cache_set('breakpoints:breakpoints', $breakpoints);
-      return $breakpoints;
     }
+    cache_set('breakpoints:breakpoints', $breakpoints);
   }
+  return $breakpoints;
 }
 
 /**
@@ -596,7 +598,8 @@ function breakpoints_breakpoint_group_load_all($reset = FALSE) {
   $groups = &backdrop_static(__FUNCTION__);
   if (!isset($groups)) {
     if (!$reset && $cache = cache_get('breakpoints:groups')) {
-      return ($groups = $cache->data);
+      $groups = $cache->data;
+      return ($groups);
     }
     else {
       $config_names = config_get_names_with_prefix('breakpoints.group.');
@@ -757,8 +760,8 @@ function breakpoints_breakpoints_group_reload(&$group, $force = TRUE) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Reload the breakpoints for a theme from its theme.info file. Clears the
+ * cache.
  */
 function breakpoints_breakpoints_group_reload_from_theme($theme_key) {
   // Clear caches so theme.info is fresh.
@@ -890,8 +893,7 @@ function breakpoints_form_system_theme_settings_alter(&$form, &$form_state) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Submit handler for the theme settings form to scan the theme for breakpoints.
  */
 function breakpoints_form_system_theme_settings_alter_submit(&$form, &$form_state) {
   $theme = $form_state['build_info']['args'][0];
@@ -908,21 +910,22 @@ function breakpoints_form_system_theme_settings_alter_submit(&$form, &$form_stat
  * Implements hook_flush_caches().
  */
 function breakpoints_flush_caches() {
-  if (config_get('breakpoints.settings', 'breakpoints_flush_caches_disabled')) {
+  if (config_get('breakpoints.settings', 'flush_caches_disabled')) {
     return;
   }
 
-  // hook_flush_caches gets invoked with both backdrop_flush_all_caches and system_cron
-  // To avoid frequent menu/theme flushes, we must backtrace caller.
+  // `hook_flush_caches` gets invoked with both `backdrop_flush_all_caches` and
+  // `system_cron`. To avoid frequent menu/theme flushes, we must backtrace
+  // caller.
   $backtrace = debug_backtrace();
-  if (isset($backtrace[3]) && ($backtrace[3]['function'] == 'backdrop_flush_all_caches') && empty($backtrace[3]['args'])) {
+  if (isset($backtrace[2]) && ($backtrace[2]['function'] == 'backdrop_flush_all_caches') && empty($backtrace[2]['args'][0])) {
 
     $themes = list_themes();
     foreach ($themes as $theme_key => $theme) {
       if ($theme->status) {
         $group = breakpoints_breakpoint_group_load($theme_key);
         if ($group) {
-          breakpoints_breakpoints_group_reload($group, FALSE);
+          breakpoints_breakpoints_group_reload($group, TRUE);
         }
         else {
           breakpoints_themes_enabled(array($theme_key), FALSE);
